@@ -1,5 +1,4 @@
 import express from "express";
-import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
@@ -7,20 +6,20 @@ app.use(express.json());
 const BOT_TOKEN = "8527435443:AAFCaga7kI8KkQmlrN9U2HFqnrNSV3cLkVU";
 const CHAT_ID = "@KotNudExp";
 
-// ✅ RUTA PRINCIPAL (TEST)
+// ✅ RUTA RAÍZ (TEST)
 app.get("/", (req, res) => {
   res.send("✅ Telegram Relay Active");
 });
 
-// ✅ ESTA ES LA RUTA QUE USA EL CRON (SIN BODY)
+// ✅ RUTA QUE USA EL CRON (SOLO POST)
 app.post("/relay", async (req, res) => {
   try {
     // 1️⃣ Pedir datos a tu web
-    const prepare = await fetch("https://kotnudexp.ct.ws/public/telegram_prepare.php");
-    const data = await prepare.json();
+    const prepareRes = await fetch("https://kotnudexp.ct.ws/public/telegram_prepare.php");
+    const data = await prepareRes.json();
 
-    if (!data || !data.foto || !data.mensaje || !data.boton) {
-      return res.status(400).json({ error: "No hay contenido para publicar" });
+    if (!data?.foto || !data?.mensaje || !data?.boton) {
+      return res.status(400).json({ error: "No hay datos válidos para publicar" });
     }
 
     // 2️⃣ Enviar a Telegram
@@ -45,10 +44,13 @@ app.post("/relay", async (req, res) => {
     res.json(result);
 
   } catch (err) {
+    console.error("❌ ERROR RELAY:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log("✅ Relay activo en puerto 3000");
+// ✅ PUERTO CORRECTO PARA RENDER (MUY IMPORTANTE)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("✅ Relay activo en puerto", PORT);
 });
