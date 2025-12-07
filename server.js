@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-const BOT_TOKEN = "AQUI_PONES_TU_TOKEN_REAL";
+const BOT_TOKEN = "8527435443:AAFCaga7kI8KkQmlrN9U2HFqnrNSV3cLkVU";
 const CHAT_ID = "@KotNudExp";
 
 app.post("/relay", async (req, res) => {
@@ -42,3 +42,4 @@ app.get("/", (req, res) => {
 app.listen(3000, () => {
   console.log("Relay activo");
 });
+
