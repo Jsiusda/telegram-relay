@@ -1,56 +1,69 @@
 import express from "express";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
+// 🔐 DATOS DE TU BOT
 const BOT_TOKEN = "8527435443:AAFCaga7kI8KkQmlrN9U2HFqnrNSV3cLkVU";
 const CHAT_ID = "@KotNudExp";
 
-// ✅ RUTA RAÍZ (TEST)
+// ✅ RUTA PRINCIPAL (SALUD DEL SERVIDOR)
 app.get("/", (req, res) => {
   res.send("✅ Telegram Relay Active");
 });
 
-// ✅ RUTA QUE USA EL CRON (SOLO POST)
+// ✅ EVITAR ERRORES CUANDO ABREN /relay EN EL NAVEGADOR (GET)
+app.get("/relay", (req, res) => {
+  res.send("⛔ Usa método POST. GET no permitido.");
+});
+
+// ✅ RUTA REAL QUE PUBLICA EN TELEGRAM (POST)
 app.post("/relay", async (req, res) => {
   try {
-    // 1️⃣ Pedir datos a tu web
-    const prepareRes = await fetch("https://kotnudexp.ct.ws/public/telegram_prepare.php");
-    const data = await prepareRes.json();
+    const { foto, mensaje, boton } = req.body;
 
-    if (!data?.foto || !data?.mensaje || !data?.boton) {
-      return res.status(400).json({ error: "No hay datos válidos para publicar" });
+    // ✅ VALIDACIÓN SIMPLE
+    if (!foto || !mensaje || !boton) {
+      return res.status(400).json({
+        error: "Faltan datos: foto, mensaje o boton"
+      });
     }
 
-    // 2️⃣ Enviar a Telegram
+    // ✅ PAYLOAD PARA TELEGRAM
     const payload = {
       chat_id: CHAT_ID,
-      photo: data.foto,
-      caption: data.mensaje,
+      photo: foto,
+      caption: mensaje,
       reply_markup: {
         inline_keyboard: [[
-          { text: "⬇ DESCARGAR AHORA", url: data.boton }
+          { text: "⬇ DESCARGAR AHORA", url: boton }
         ]]
       }
     };
 
+    // ✅ ENVÍO A TELEGRAM
     const tg = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
-    const result = await tg.json();
-    res.json(result);
+    const data = await tg.json();
+
+    // ✅ RESPUESTA FINAL
+    res.json(data);
 
   } catch (err) {
-    console.error("❌ ERROR RELAY:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: "Error interno en relay",
+      detalle: err.message
+    });
   }
 });
 
-// ✅ PUERTO CORRECTO PARA RENDER (MUY IMPORTANTE)
+// ✅ PUERTO PARA RENDER
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("✅ Relay activo en puerto", PORT);
+  console.log("✅ Telegram Relay activo en puerto", PORT);
 });
